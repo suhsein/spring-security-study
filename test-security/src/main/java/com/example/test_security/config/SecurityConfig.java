@@ -2,6 +2,7 @@ package com.example.test_security.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.User;
@@ -19,6 +20,7 @@ public class SecurityConfig {
     public BCryptPasswordEncoder bCryptPasswordEncoder(){
         return new BCryptPasswordEncoder();
     }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
@@ -31,14 +33,33 @@ public class SecurityConfig {
                         .requestMatchers("/my/**").hasAnyRole("ADMIN", "USER")
                         .anyRequest().authenticated());
 
-        // 권한 없는 페이지에 대해서 로그인 페이지를 보여줄 수 있도록 함.
-        // .loginPage() 로그인 페이지 url
-        // .loginProcessingUrl() 로그인 폼의 action url
-        http
+        /**
+         * form 방식 로그인
+         *
+         * 권한 없는 페이지에 대해서 로그인 페이지를 보여줄 수 있도록 함.
+         * .loginPage() 로그인 페이지 url
+         * .loginProcessingUrl() 로그인 폼의 action url
+         */
+      /*  http
                 .formLogin((auth) -> auth
                         .loginPage("/login")
                         .loginProcessingUrl("/loginProc")
-                        .permitAll());
+                        .permitAll());*/
+
+        /**
+         * http basic 방식 인증
+         *
+         * 권한 없는 페이지에 대하여 form 방식 대신 사용할 수 있음
+         * 아이디와 비밀번호를 Base64 방식으로 인코딩한 후,
+         * !!!HTTP 인증 헤더에 부착하여!!! 서버 측으로 요청을 보내는 방식
+         *
+         * 사용 예 :
+         * 마이크로서비스 아키텍쳐 구현 시에 Eureka 서버나 config 서버는 private 망에서 통신하지만,
+         * 더 엄격한 보안을 위해 httpBasic 방식의 인증 사용
+         */
+        http
+                .httpBasic(Customizer.withDefaults());
+
 
         /**
          * csrf 개발 환경에서만 꺼두기
@@ -68,5 +89,5 @@ public class SecurityConfig {
                         .sessionFixation().changeSessionId());
         return http.build();
     }
-    
+
 }
