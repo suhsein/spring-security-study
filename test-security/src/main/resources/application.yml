@@ -12,7 +12,15 @@ spring:
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
       format_sql: true
+  mustache:
+    servlet:
+      expose-request-attributes: true # csrf
 
 logging:
   level:
     org.hibernate.SQL: debug
+
+server:
+  servlet:
+    session:
+      timeout: 90m

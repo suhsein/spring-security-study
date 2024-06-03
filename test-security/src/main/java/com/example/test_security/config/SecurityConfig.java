@@ -36,10 +36,32 @@ public class SecurityConfig {
                         .loginProcessingUrl("/loginProc")
                         .permitAll());
 
-        // 개발 환경에서만 꺼두기
-        http
-                .csrf((auth) -> auth.disable());
+        /**
+         * csrf 개발 환경에서만 꺼두기
+         * csrf 켜져 있으면, 로그인 전/후로 csrf 토큰을 필요로 하게 됨
+         *
+         * API 서버의 경우, 보통 세션을 STATELESS 로 관리하기 때문에 스프링 시큐리티 csrf 설정을 꺼둬도 된다.
+         */
+//        http
+//                .csrf((auth) -> auth.disable());
 
+
+        /**
+         * 다중 로그인 설정
+         * maximumSessions(정수) -> 하나의 아이디에 대한 다중 로그인 허용 개수
+         * maximumSessionPreventsLogin(불린) -> 다중 로그인 개수를 초과했을 경우 처리 방법
+         *      * true : 초과 시 새로운 로그인 차단
+         *      * false : 초과 시 기존 세션 하나 삭제
+         */
+        http
+                .sessionManagement((auth) -> auth
+                        .maximumSessions(1)
+                        .maxSessionsPreventsLogin(true));
+
+        // 세션 고정 보호
+        http
+                .sessionManagement((auth)-> auth
+                        .sessionFixation().changeSessionId());
         return http.build();
     }
 }
