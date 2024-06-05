@@ -1,5 +1,6 @@
 package com.example.test_security.config;
 
+import jakarta.servlet.http.HttpSession;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -40,7 +41,7 @@ public class SecurityConfig {
          * .loginPage() 로그인 페이지 url
          * .loginProcessingUrl() 로그인 폼의 action url
          */
-      /*  http
+       /* http
                 .formLogin((auth) -> auth
                         .loginPage("/login")
                         .loginProcessingUrl("/loginProc")
@@ -59,7 +60,6 @@ public class SecurityConfig {
          */
         http
                 .httpBasic(Customizer.withDefaults());
-
 
         /**
          * csrf 개발 환경에서만 꺼두기
