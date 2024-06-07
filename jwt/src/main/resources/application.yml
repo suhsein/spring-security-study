@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: jwt
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:3306/jwt_test?useSSL=false&serverTimezone=UTC&characterEncoding=utf8
+    username: root
+    password: ${password}
+  jpa:
+    hibernate:
+      ddl-auto: none
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    properties:
+      hibernate:
+        format_sql: true
+  jwt:
+    secret: ${jwtKey}
+logging:
+  level:
+    org.hibernate.SQL: debug
+
