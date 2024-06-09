@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -51,6 +52,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final ClientRegistrationRepository clientRegistrationRepository;
+    private final OAuth2AuthorizedClientService oAuth2AuthorizedClientService;
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
         http
@@ -63,6 +65,7 @@ public class SecurityConfig {
                 .oauth2Login((oauth2) -> oauth2
                         .loginPage("/login")
                         .clientRegistrationRepository(clientRegistrationRepository)
+                        .authorizedClientService(oAuth2AuthorizedClientService) // jdbc 방식 서비스
                         .userInfoEndpoint((userInfoEndpointConfig) ->
                                 userInfoEndpointConfig.userService(customOAuth2UserService)));
         http
