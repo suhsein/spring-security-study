@@ -23,9 +23,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         System.out.println("oAuth2User = " + oAuth2User);
 
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
-        System.out.println("registrationId = " + registrationId);
-        String clientId = userRequest.getClientRegistration().getClientId();
-        System.out.println("clientId = " + clientId);
 
         OAuth2Response oAuth2Response = null;
 
