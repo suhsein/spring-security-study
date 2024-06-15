@@ -49,8 +49,9 @@ public class SecurityConfig {
          */
 
         // jwt filter 등록
+        // 재로그인 무한루프 문제로, JWTFilter 를 UsernamePasswordAuthenticationFilter 뒤에 등록
         http
-                .addFilterBefore(new JWTFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
+                .addFilterAfter(new JWTFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
 
         // 시큐리티 필터 거치는 경우 cors
         http

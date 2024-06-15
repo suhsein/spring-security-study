@@ -1,27 +1,28 @@
 package com.example.jwt.jwt;
 
-import ch.qos.logback.core.spi.ErrorCodes;
-import com.example.jwt.dto.CustomUserDetails;
+import com.example.jwt.entity.RefreshEntity;
+import com.example.jwt.repository.RefreshRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.Date;
 
 @RequiredArgsConstructor
 public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     private final AuthenticationManager authenticationManager;
     private final JWTUtil jwtUtil;
+    private final RefreshRepository refreshRepository;
 
     // 검증 : 인증 정보 추출 후, AuthenticationManager 검증 메서드 호출할 때 인증 정보로부터 생성한 토큰을 넘겨주면 됨.
     @Override
@@ -64,21 +65,25 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
          * (즉, Authorization: "Bearer {JWT 값}")
          *
          */
+         // 유저 정보
+        String username = authentication.getName();
+        String role = authentication.getAuthorities().iterator().next().getAuthority();
 
-        // UserDetails
-        CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
+        Long refreshExpiredMs = 60 * 60 * 24 * 1000L;
 
-        String username = customUserDetails.getUsername();
+        // 토큰 생성
+        String accessToken = jwtUtil.createJwt("access", username, role, 10*60*1000L);
+        String refreshToken = jwtUtil.createJwt("refresh", username, role, refreshExpiredMs);
 
-        Collection<? extends GrantedAuthority> authorities = customUserDetails.getAuthorities();
-        Iterator<? extends GrantedAuthority> iter = authorities.iterator();
-        GrantedAuthority auth = iter.next();
+        // Refresh 토큰 저장
+        addRefreshEntity(username, refreshToken, refreshExpiredMs);
 
-        String role = auth.getAuthority();
+        response.addHeader("access", accessToken);
+        response.addCookie(createCookie("refresh", refreshToken));
+        response.setStatus(HttpStatus.OK.value());
 
-        String token = jwtUtil.createJwt(username, role, 60 * 60 * 10L);
-
-        response.addHeader("Authorization", "Bearer " + token);
+        // 로그인 성공 시 여기서 응답 반환. 더 이상 필터 체인을 거칠 이유가 없음.
+        // 그렇지 않으면 끝까지 도달 -> 컨트롤러에 매핑된 서블릿을 찾게 되는데 매핑 안해줬으므로 없음. => 오류 발생
     }
 
     // 로그인 실패 시 실행하는 메서드
@@ -86,5 +91,23 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) throws IOException, ServletException {
         // 로그인 실패 시 401 코드 반환 : Unauthorized code
         response.setStatus(401);
+    }
+
+    private void addRefreshEntity(String username, String refresh, Long expiredMs) {
+        Date date = new Date(System.currentTimeMillis() + expiredMs);
+
+        RefreshEntity refreshEntity = new RefreshEntity();
+        refreshEntity.setUsername(username);
+        refreshEntity.setRefresh(refresh);
+        refreshEntity.setExpiration(date.toString());
+
+        refreshRepository.save(refreshEntity);
+    }
+
+    private Cookie createCookie(String key, String value){
+        Cookie cookie = new Cookie(key, value);
+        cookie.setMaxAge(24*60*60);
+        cookie.setHttpOnly(true);
+        return cookie;
     }
 }
